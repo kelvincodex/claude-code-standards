@@ -6,11 +6,27 @@
 
 ## Commands
 
+{{#IF_NODE}}
 ```bash
 npm run dev         # Dev server
 npm run build       # Production build (ALWAYS run after changes to verify)
 npm run lint        # Linting
 ```
+{{/IF_NODE}}
+{{#IF_PYTHON}}
+```bash
+python manage.py runserver    # Dev server (Django)
+python -m pytest              # Run tests
+pip install -r requirements.txt  # Install dependencies
+```
+{{/IF_PYTHON}}
+{{#IF_PHP}}
+```bash
+php artisan serve    # Dev server (Laravel)
+composer install     # Install dependencies
+php artisan test     # Run tests
+```
+{{/IF_PHP}}
 
 ## Tech Stack
 
@@ -65,19 +81,90 @@ npm run lint        # Linting
 - **Interceptors**: Use for response transformation and logging.
 {{/IF_NESTJS}}
 
+{{#IF_PYTHON}}
+## Python Conventions
+
+- **Type hints**: Use type hints on all function signatures. Use `from __future__ import annotations` for modern syntax.
+- **Imports**: Group imports in order: stdlib, third-party, local. Use absolute imports.
+- **Virtual environments**: Always use `venv` or `poetry` for dependency isolation.
+{{/IF_PYTHON}}
+
+{{#IF_DJANGO}}
+## Django Conventions
+
+- **Models**: One model per concept. Use `Meta` class for ordering, constraints. Always add `__str__`.
+- **Migrations**: Run `makemigrations` after model changes. Never edit migrations manually.
+- **Views**: Prefer class-based views (CBV) for CRUD, function-based views (FBV) for custom logic.
+- **URLs**: Use `path()` with named routes. Namespace per app.
+- **Settings**: Use environment variables for secrets. Split settings into base/dev/prod.
+- **Serializers**: All DRF serializers in dedicated `serializers.py`. Never define inline.
+- **Management commands**: Custom commands go in `management/commands/`.
+{{/IF_DJANGO}}
+
+{{#IF_FASTAPI}}
+## FastAPI Conventions
+
+- **Routers**: One router per domain in `routers/` directory. Register in `app.include_router()`.
+- **Pydantic models**: All request/response schemas in `schemas/`. Never define inline.
+- **Dependency injection**: Use `Depends()` for shared logic (auth, db sessions).
+- **Async**: Use `async def` for I/O-bound endpoints. Use sync for CPU-bound.
+- **Error handling**: Raise `HTTPException` with specific status codes. Use custom exception handlers for domain errors.
+{{/IF_FASTAPI}}
+
+{{#IF_FLASK}}
+## Flask Conventions
+
+- **Blueprints**: One blueprint per feature domain. Register in app factory.
+- **App factory**: Use `create_app()` pattern for configuration.
+- **Routes**: Group related routes in blueprints. Use `url_for()` for URL generation.
+- **Config**: Use class-based config (Development, Production, Testing).
+{{/IF_FLASK}}
+
+{{#IF_PHP}}
+## PHP Conventions
+
+- **PSR-4 autoloading**: Follow namespace-to-directory mapping. One class per file.
+- **PSR-12 coding style**: Follow standard coding style. Use automated formatters.
+- **Type declarations**: Use strict types (`declare(strict_types=1)`) in all files. Type all parameters, returns, and properties.
+- **Never use raw superglobals**: Use framework Request objects instead of `$_GET`, `$_POST`, `$_REQUEST`.
+{{/IF_PHP}}
+
+{{#IF_LARAVEL}}
+## Laravel Conventions
+
+- **Eloquent models**: One model per table. Define `$fillable` or `$guarded`. Use relationships and scopes.
+- **Migrations**: Use artisan to generate. Never edit existing migrations in production — create new ones.
+- **Controllers**: One resource controller per model. Use Form Requests for validation.
+- **Form Requests**: All validation in dedicated Form Request classes. Never validate in controllers.
+- **Resources**: Use API Resources for response transformation. Never return raw models from API endpoints.
+- **Artisan commands**: Custom commands in `app/Console/Commands/`. Register in Kernel.
+- **Service pattern**: Extract business logic into services. Controllers should only handle HTTP concerns.
+- **Blade templates**: Use components and layouts. Avoid inline PHP in views.
+{{/IF_LARAVEL}}
+
+{{#IF_SYMFONY}}
+## Symfony Conventions
+
+- **Controllers**: Extend `AbstractController`. One controller per feature area.
+- **Services**: Register in `services.yaml` or use autowiring. Inject dependencies via constructor.
+- **Doctrine entities**: One entity per table. Use repositories for queries.
+- **Forms**: Use Form types for validation and data transformation.
+- **Twig templates**: Use template inheritance with `extends` and `block`.
+{{/IF_SYMFONY}}
+
 ## Bug Fixing
 
 Identify the EXACT file and component before patching. After fixing, grep the codebase for similar patterns that may need the same fix.
 
 {{#IF_FRONTEND}}
-## Figma-to-Code Rules
+## Design-to-Code Rules
 
-When building from Figma designs:
+When building from designs (Figma or .pen files):
 - **Never neglect backgrounds** — apply every gradient, color, shadow
 - **Always read UI library source** — check for default styles that override yours
 - **Exact spacing** — match gap, padding, margin from the design exactly
 - **Check every surface** — background, box-shadow, border, border-radius must all match
-- **Use figma-builder and figma-validator agents** for pixel-perfect implementation
+- **Use design agents** — figma-builder/pen-builder for building, figma-validator/pen-validator for verification
 - **Visual compare** — always compare rendered output against the design
 {{/IF_FRONTEND}}
 
@@ -87,8 +174,10 @@ Run **code-guardian** FIRST before starting any task.
 
 - `.claude/agents/code-guardian.md` — Audits rule compliance, finds violations, discovers undocumented patterns
 {{#IF_FRONTEND}}
-- `.claude/agents/figma-builder.md` — Builds pixel-perfect components from Figma
+- `.claude/agents/figma-builder.md` — Builds pixel-perfect components from Figma designs
 - `.claude/agents/figma-validator.md` — Validates components against Figma designs
+- `.claude/agents/pen-builder.md` — Builds pixel-perfect components from .pen (Pencil) designs
+- `.claude/agents/pen-validator.md` — Validates components against .pen (Pencil) designs
 {{/IF_FRONTEND}}
 
 ## Additional Documentation
