@@ -1,0 +1,199 @@
+# Project
+
+{{PROJECT_NAME}} — {{PROJECT_DESCRIPTION}}
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+{{TECH_STACK_TABLE}}
+
+## Key Conventions
+
+- Use `@/*` or configured path alias for imports. Avoid deep relative paths.
+- Organize components by what they ARE (ui/, cards/, modal/, pages/, sections/), not what page they appear on.
+{{#IF_SHADCN}}
+- `src/components/ui/` is READ-ONLY — never modify UI library primitives. Create wrappers instead.
+{{/IF_SHADCN}}
+{{#IF_ZOD}}
+- All Zod schemas go in a dedicated validation directory. Never define validation inline.
+{{/IF_ZOD}}
+{{#IF_NICE_MODAL}}
+- Use `@ebay/nice-modal-react` with centralized `ModalConstant` for IDs. Register modals in barrel file.
+{{/IF_NICE_MODAL}}
+{{#IF_NEXTJS}}
+- Each major section should be a page route. Layouts provide persistent shells. Use `usePathname()` + `<Link>` for navigation.
+{{/IF_NEXTJS}}
+
+{{LEARNED_PATTERNS}}
+
+{{#IF_RTK_QUERY}}
+## Service Layer
+
+- RTK Query services in `src/services/api/`. One service per domain, extending the base API factory.
+- All cache tags in a centralized constant file. All DTOs in dedicated model directories. Never define inline.
+- Register new services in 3 places: reducers, middleware, and re-export.
+{{/IF_RTK_QUERY}}
+
+{{#IF_NESTJS}}
+## Backend Conventions
+
+- One module per domain with controller, service, and DTOs.
+- All DTOs in dedicated files with class-validator decorators. Never accept raw objects.
+- Use guards for auth, ValidationPipe globally, interceptors for response transformation.
+{{/IF_NESTJS}}
+
+{{#IF_PYTHON}}
+## Python Conventions
+
+- Use type hints on all function signatures. Use `from __future__ import annotations`.
+- Group imports: stdlib, third-party, local. Use absolute imports.
+- Always use `venv` or `poetry` for dependency isolation.
+{{/IF_PYTHON}}
+
+{{#IF_DJANGO}}
+## Django Conventions
+
+- One model per concept with `Meta` class and `__str__`. Run `makemigrations` after model changes.
+- Prefer CBV for CRUD, FBV for custom logic. Use `path()` with named routes, namespace per app.
+- All DRF serializers in `serializers.py`. Use environment variables for secrets.
+{{/IF_DJANGO}}
+
+{{#IF_FASTAPI}}
+## FastAPI Conventions
+
+- One router per domain in `routers/`. All Pydantic schemas in `schemas/`.
+- Use `Depends()` for shared logic. Use `async def` for I/O-bound, sync for CPU-bound.
+- Raise `HTTPException` with specific status codes. Use custom handlers for domain errors.
+{{/IF_FASTAPI}}
+
+{{#IF_FLASK}}
+## Flask Conventions
+
+- One blueprint per feature domain. Use `create_app()` factory pattern.
+- Group related routes in blueprints. Use class-based config (Development, Production, Testing).
+{{/IF_FLASK}}
+
+{{#IF_PHP}}
+## PHP Conventions
+
+- PSR-4 autoloading, PSR-12 coding style. One class per file.
+- Use `declare(strict_types=1)` in all files. Type all parameters, returns, and properties.
+- Use framework Request objects instead of raw superglobals.
+{{/IF_PHP}}
+
+{{#IF_LARAVEL}}
+## Laravel Conventions
+
+- One model per table with `$fillable`/`$guarded`, relationships, and scopes.
+- Use Form Requests for validation. Use API Resources for response transformation.
+- Extract business logic into services. Controllers handle HTTP concerns only.
+- Use artisan for migrations. Never edit existing migrations in production.
+{{/IF_LARAVEL}}
+
+{{#IF_SYMFONY}}
+## Symfony Conventions
+
+- Controllers extend `AbstractController`. One per feature area.
+- Use autowiring for dependency injection. One Doctrine entity per table.
+- Use Form types for validation. Use Twig template inheritance.
+{{/IF_SYMFONY}}
+
+{{#IF_GO}}
+## Go Conventions
+
+- Always check errors (`if err != nil`). Wrap with context via `fmt.Errorf("op: %w", err)`.
+- Define interfaces where used, not implemented. Keep them small. `gofmt` is mandatory.
+- Exported: `PascalCase`. Unexported: `camelCase`. Acronyms all-caps (`HTTPClient`).
+{{/IF_GO}}
+
+{{#IF_RUST}}
+## Rust Conventions
+
+- Use `Result<T, E>` and `?` operator. Avoid `.unwrap()` except in tests. `cargo fmt` and `cargo clippy` mandatory.
+- Prefer borrowing (`&T`) over cloning. Use `Arc<T>` for shared ownership in async.
+- One module per file. Re-export public API from `lib.rs`.
+{{/IF_RUST}}
+
+{{#IF_RUBY}}
+## Ruby Conventions
+
+- `snake_case` for methods/variables. `PascalCase` for classes. `?` for booleans, `!` for mutating methods.
+{{/IF_RUBY}}
+
+{{#IF_RAILS}}
+## Rails Conventions
+
+- Follow MVC strictly. Use scopes, validations, strong parameters. Keep controllers thin — extract to services.
+- RESTful routes via `resources`. Background jobs via Sidekiq/ActiveJob (idempotent).
+{{/IF_RAILS}}
+
+{{#IF_JAVA}}
+## Java Conventions
+
+- Organize by layer (controller/service/repository/model/dto). Prefer immutable objects with builder pattern.
+- Use `Optional<T>` for nullable returns, never as parameters.
+{{/IF_JAVA}}
+
+{{#IF_SPRING_BOOT}}
+## Spring Boot Conventions
+
+- Controller → Service → Repository. Never skip layers. Use constructor injection.
+- Map entities to DTOs. Use `@ControllerAdvice` for global error handling. Secrets via env vars.
+{{/IF_SPRING_BOOT}}
+
+{{#IF_DOTNET}}
+## .NET Conventions
+
+- Match namespaces to folders. Use `async Task<T>` (never `async void`). Enable nullable reference types.
+- Use constructor DI. Register in `Program.cs`.
+{{/IF_DOTNET}}
+
+{{#IF_FLUTTER}}
+## Flutter Conventions
+
+- Keep `build()` small. Use `const` constructors. Use chosen state management consistently.
+- Use declarative routing (go_router). Theme via `ThemeData`.
+{{/IF_FLUTTER}}
+
+{{#IF_SWIFT}}
+## Swift Conventions
+
+- Prefer `guard let`/`if let` over force unwraps. Protocol-oriented design. Default to `private` access.
+- Structs for data, classes for identity/reference semantics.
+{{/IF_SWIFT}}
+
+{{#IF_ZUSTAND}}
+- **Zustand**: One store per domain. Always use selectors. Use `persist`/`devtools` middleware.
+{{/IF_ZUSTAND}}
+{{#IF_TANSTACK_QUERY}}
+- **TanStack Query**: Use query key factories. One custom hook per query/mutation. Invalidate after mutations.
+{{/IF_TANSTACK_QUERY}}
+{{#IF_FORMIK}}
+- **Formik**: Use `<Field>` and `<ErrorMessage>`. Define initialValues and validationSchema outside component.
+{{/IF_FORMIK}}
+{{#IF_REACT_HOOK_FORM}}
+- **React Hook Form**: Use `useForm()` with `resolver`. Use `Controller` for controlled inputs.
+{{/IF_REACT_HOOK_FORM}}
+{{#IF_YUP}}
+- **Yup**: All schemas in a dedicated directory. Compose with `.shape()` and `.concat()`.
+{{/IF_YUP}}
+{{#IF_VUE}}
+- **Vue**: Use `<script setup>` with Composition API. Organize into composables (`use*.ts`).
+{{/IF_VUE}}
+{{#IF_ANGULAR}}
+- **Angular**: One module per feature. Use services for business logic. Always unsubscribe from observables.
+{{/IF_ANGULAR}}
+{{#IF_SVELTE}}
+- **Svelte**: Use `$:` for reactive declarations. Keep components small. Extract logic into `.ts` files.
+{{/IF_SVELTE}}
+
+## Bug Fixing
+
+Identify the EXACT file and component before patching. Grep for similar patterns that may need the same fix.
+
+{{#IF_FRONTEND}}
+## Design-to-Code
+
+When building from designs: match every gradient, color, shadow, spacing, border, and border-radius exactly. Always read UI library source for default styles. Visually compare rendered output against the design.
+{{/IF_FRONTEND}}

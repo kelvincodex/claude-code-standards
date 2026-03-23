@@ -12,7 +12,7 @@ You are the Code Guardian — an auditor and curious observer of this codebase.
 
 ## Setup
 1. Read `CLAUDE.md` at the project root — this is your source of truth
-2. Read `package.json`, `requirements.txt`/`pyproject.toml`, or `composer.json` to understand the tech stack
+2. Read `package.json`, `requirements.txt`/`pyproject.toml`, `composer.json`, `go.mod`, `Cargo.toml`, `Gemfile`, `pom.xml`/`build.gradle`, `*.csproj`, `pubspec.yaml`, or `Package.swift` to understand the tech stack
 3. Check `.claude/docs/` for additional documented patterns
 
 ## Universal Checks (All Projects)
@@ -201,6 +201,126 @@ grep -rn "TODO\|FIXME\|HACK\|XXX" src/ app/ --include="*.php" 2>/dev/null | head
 find . -name "*.php" -not -path "*/vendor/*" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -20
 ```
 
+### If Go (go.mod present)
+```bash
+# Check that gofmt formatting is applied
+find . -name "*.go" -not -path "*/vendor/*" 2>/dev/null | xargs gofmt -l 2>/dev/null | head -20
+
+# Check for unchecked errors (if err != nil missing)
+grep -rn "err :=" --include="*.go" 2>/dev/null | while read line; do file=$(echo "$line" | cut -d: -f1); lineno=$(echo "$line" | cut -d: -f2); nextline=$((lineno + 1)); sed -n "${nextline}p" "$file" | grep -q "if err" || echo "$line"; done 2>/dev/null | head -15
+
+# Check for unused imports
+grep -rn "^import" --include="*.go" 2>/dev/null | head -20
+
+# Check exported functions have doc comments
+grep -rn "^func [A-Z]" --include="*.go" 2>/dev/null | while read line; do file=$(echo "$line" | cut -d: -f1); lineno=$(echo "$line" | cut -d: -f2); prevline=$((lineno - 1)); sed -n "${prevline}p" "$file" | grep -q "^//" || echo "$line"; done 2>/dev/null | head -15
+
+# Check for goroutine leaks (goroutines without context)
+grep -rn "go func\|go .*(" --include="*.go" 2>/dev/null | grep -v "context\|ctx" | head -10
+```
+
+### If Rust (Cargo.toml present)
+```bash
+# Check for .unwrap() calls (should use ? or proper error handling)
+grep -rn "\.unwrap()" src/ --include="*.rs" 2>/dev/null | head -15
+
+# Check for unsafe blocks
+grep -rn "unsafe {" src/ --include="*.rs" 2>/dev/null | head -10
+
+# Check for missing documentation on public items
+grep -rn "^pub fn\|^pub struct\|^pub enum\|^pub trait" src/ --include="*.rs" 2>/dev/null | while read line; do file=$(echo "$line" | cut -d: -f1); lineno=$(echo "$line" | cut -d: -f2); prevline=$((lineno - 1)); sed -n "${prevline}p" "$file" | grep -q "^///" || echo "$line"; done 2>/dev/null | head -15
+
+# Check for clone() overuse
+grep -rn "\.clone()" src/ --include="*.rs" 2>/dev/null | head -15
+
+# Large files (>300 lines)
+find src/ -name "*.rs" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -20
+```
+
+### If Ruby (Gemfile present)
+```bash
+# Check for N+1 queries (accessing relations in loops)
+grep -rn "\.each\|\.map\|\.select" app/ --include="*.rb" 2>/dev/null | grep "\.\w*\.\w*" | head -10
+
+# Check for missing validations on models
+grep -rL "validates\|validate " app/models/*.rb 2>/dev/null
+
+# Check for raw SQL (should use ActiveRecord)
+grep -rn "execute\|find_by_sql\|connection\.select" app/ --include="*.rb" 2>/dev/null | head -10
+
+# Check for missing strong parameters in controllers
+grep -rn "params\[" app/controllers/ --include="*.rb" 2>/dev/null | grep -v "params\.require\|params\.permit" | head -10
+
+# TODO/FIXME comments
+grep -rn "TODO\|FIXME\|HACK\|XXX" app/ lib/ --include="*.rb" 2>/dev/null | head -20
+```
+
+### If Java/Kotlin (pom.xml or build.gradle present)
+```bash
+# Check for unused imports
+grep -rn "^import " src/ --include="*.java" --include="*.kt" 2>/dev/null | head -20
+
+# Check for raw types (no generics)
+grep -rn "List \|Map \|Set \|ArrayList \|HashMap " src/ --include="*.java" 2>/dev/null | grep -v "<" | head -10
+
+# Check for missing @Override annotations
+grep -rn "public.*(.*).*{" src/ --include="*.java" 2>/dev/null | while read line; do file=$(echo "$line" | cut -d: -f1); lineno=$(echo "$line" | cut -d: -f2); prevline=$((lineno - 1)); sed -n "${prevline}p" "$file" | grep -q "@Override" || echo "$line"; done 2>/dev/null | head -15
+
+# Check for long methods (>30 lines)
+grep -rn "public\|private\|protected" src/ --include="*.java" --include="*.kt" 2>/dev/null | grep "(.*).*{" | head -20
+
+# Check for System.out.println (should use logger)
+grep -rn "System\.out\.println\|System\.err\.println" src/ --include="*.java" 2>/dev/null | head -10
+```
+
+### If .NET (*.csproj present)
+```bash
+# Check for async void methods (should be async Task)
+grep -rn "async void" --include="*.cs" 2>/dev/null | head -10
+
+# Check for missing null checks
+grep -rn "public.*(.*)$" --include="*.cs" 2>/dev/null | grep -v "?" | head -15
+
+# Check for IDisposable not being disposed
+grep -rn "new.*Stream\|new.*Connection\|new.*Client" --include="*.cs" 2>/dev/null | grep -v "using\|await using" | head -10
+
+# Large files (>300 lines)
+find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -20
+
+# Check for missing XML docs on public APIs
+grep -rn "public " --include="*.cs" 2>/dev/null | grep "class\|interface\|enum\|void\|async\|static" | while read line; do file=$(echo "$line" | cut -d: -f1); lineno=$(echo "$line" | cut -d: -f2); prevline=$((lineno - 1)); sed -n "${prevline}p" "$file" | grep -q "/// <summary>" || echo "$line"; done 2>/dev/null | head -15
+```
+
+### If Dart/Flutter (pubspec.yaml present)
+```bash
+# Check for missing const constructors
+grep -rn "new \w\+(" lib/ --include="*.dart" 2>/dev/null | head -10
+
+# Check for setState in FutureBuilder/StreamBuilder
+grep -rn "setState" lib/ --include="*.dart" 2>/dev/null | grep -i "future\|stream" | head -10
+
+# Check for deprecated API usage
+grep -rn "@deprecated\|@Deprecated" lib/ --include="*.dart" 2>/dev/null | head -10
+
+# Check for large widget build methods (>50 lines)
+grep -rn "Widget build" lib/ --include="*.dart" 2>/dev/null | head -20
+```
+
+### If Swift (Package.swift present)
+```bash
+# Check for force unwraps (!)
+grep -rn "!$\|!\." Sources/ --include="*.swift" 2>/dev/null | grep -v "//\|!=\|!=" | head -15
+
+# Check for retain cycles (missing [weak self])
+grep -rn "{ self\.\|{self\." Sources/ --include="*.swift" 2>/dev/null | grep -v "\[weak self\]\|\[unowned self\]" | head -10
+
+# Check for missing access control (public/private/internal)
+grep -rn "^func \|^var \|^let \|^class \|^struct \|^enum " Sources/ --include="*.swift" 2>/dev/null | grep -v "public\|private\|internal\|fileprivate\|open" | head -15
+
+# Large files (>300 lines)
+find Sources/ -name "*.swift" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -20
+```
+
 ## Discovery Mode
 
 After running checks, observe the project structure:
@@ -221,6 +341,34 @@ ls */migrations/ 2>/dev/null
 find app/ src/ -name "*.php" -not -path "*/vendor/*" 2>/dev/null | head -30
 ls app/Http/Controllers/ 2>/dev/null
 ls app/Models/ 2>/dev/null
+
+# Go projects
+find . -name "*.go" -not -path "*/vendor/*" 2>/dev/null | head -30
+ls cmd/ pkg/ internal/ 2>/dev/null
+
+# Rust projects
+find src/ -name "*.rs" 2>/dev/null | head -30
+ls src/ 2>/dev/null
+
+# Ruby projects
+find app/ lib/ -name "*.rb" 2>/dev/null | head -30
+ls app/controllers/ app/models/ app/views/ 2>/dev/null
+
+# Java/Kotlin projects
+find src/ -name "*.java" -o -name "*.kt" 2>/dev/null | head -30
+ls src/main/java/ src/main/kotlin/ 2>/dev/null
+
+# .NET projects
+find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" 2>/dev/null | head -30
+ls Controllers/ Models/ Services/ 2>/dev/null
+
+# Dart/Flutter projects
+find lib/ -name "*.dart" 2>/dev/null | head -30
+ls lib/ lib/src/ 2>/dev/null
+
+# Swift projects
+find Sources/ -name "*.swift" 2>/dev/null | head -30
+ls Sources/ Tests/ 2>/dev/null
 ```
 
 ## Report Format

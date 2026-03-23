@@ -27,6 +27,61 @@ composer install     # Install dependencies
 php artisan test     # Run tests
 ```
 {{/IF_PHP}}
+{{#IF_GO}}
+```bash
+go run .            # Run the application
+go test ./...       # Run all tests
+go build            # Build binary
+go vet ./...        # Static analysis
+```
+{{/IF_GO}}
+{{#IF_RUST}}
+```bash
+cargo run           # Run the application
+cargo test          # Run all tests
+cargo build         # Build (debug)
+cargo build --release  # Build (release)
+cargo clippy        # Lint
+```
+{{/IF_RUST}}
+{{#IF_RUBY}}
+```bash
+bundle exec rails s     # Dev server (Rails)
+bundle exec rspec       # Run tests
+bundle install          # Install dependencies
+rubocop                 # Linting
+```
+{{/IF_RUBY}}
+{{#IF_JAVA}}
+```bash
+mvn spring-boot:run     # Dev server (Maven)
+mvn test                # Run tests
+./gradlew bootRun       # Dev server (Gradle)
+./gradlew test          # Run tests (Gradle)
+```
+{{/IF_JAVA}}
+{{#IF_DOTNET}}
+```bash
+dotnet run         # Run the application
+dotnet test        # Run tests
+dotnet build       # Build
+```
+{{/IF_DOTNET}}
+{{#IF_DART}}
+```bash
+flutter run        # Run the app
+flutter test       # Run tests
+flutter build      # Build
+dart analyze       # Static analysis
+```
+{{/IF_DART}}
+{{#IF_SWIFT}}
+```bash
+swift build        # Build
+swift test         # Run tests
+swift run          # Run
+```
+{{/IF_SWIFT}}
 
 ## Tech Stack
 
@@ -34,8 +89,11 @@ php artisan test     # Run tests
 |-------|-----------|
 {{TECH_STACK_TABLE}}
 
+{{LEARNED_PATTERNS}}
+
 ## Key Conventions
 
+{{#IF_FRONTEND}}
 - **Import alias**: Use `@/*` or configured path alias for imports. Avoid deep relative paths.
 - **Component organization** — organize by what the component IS:
   - `ui/` — UI library primitives (READ-ONLY if using shadcn/ui)
@@ -47,32 +105,132 @@ php artisan test     # Run tests
   - `pages/` — full page-level content views
   - `modal/` — modal dialogs
   - Think about what the component IS, not what page it appears on.
+{{/IF_FRONTEND}}
 {{#IF_SHADCN}}
 - **`src/components/ui/` is READ-ONLY** — never modify UI library primitives directly. Create wrappers in feature directories that import and extend them.
 {{/IF_SHADCN}}
+{{#IF_MUI}}
+- **Material UI theming** — customize via `createTheme()`. Use `sx` prop for one-off styles. Use `styled()` for reusable styled components. Never override internal MUI class names directly.
+{{/IF_MUI}}
+{{#IF_ANTD}}
+- **Ant Design theming** — use `ConfigProvider` with custom theme tokens. Use `Form.Item` for form fields. Never override `.ant-*` classes directly.
+{{/IF_ANTD}}
+{{#IF_CHAKRA}}
+- **Chakra UI theming** — extend the theme via `extendTheme()`. Use component props for styling. Use responsive array syntax for breakpoints.
+{{/IF_CHAKRA}}
 {{#IF_ZOD}}
 - **Form validation**: All Zod schemas go in a dedicated validation directory. Never define validation inline in components.
 {{/IF_ZOD}}
+{{#IF_YUP}}
+- **Form validation**: All Yup schemas go in a dedicated validation directory. Compose schemas using `.shape()` and `.concat()`. Never define inline.
+{{/IF_YUP}}
+{{#IF_FORMIK}}
+- **Forms**: Use Formik's `<Field>` and `<ErrorMessage>` components. Define initial values and validation schema outside the component. Use `onSubmit` handler, never manual form events.
+{{/IF_FORMIK}}
+{{#IF_REACT_HOOK_FORM}}
+- **Forms**: Use `useForm()` with `resolver` for Zod/Yup validation. Use `Controller` for controlled inputs. Access form state via `formState`, not manual state.
+{{/IF_REACT_HOOK_FORM}}
 {{#IF_NICE_MODAL}}
 - **Modals**: Use `@ebay/nice-modal-react` with centralized `ModalConstant` for IDs. Each modal uses `NiceModal.create()` + UI Dialog. Register in barrel file.
 {{/IF_NICE_MODAL}}
 {{#IF_NEXTJS}}
 - **Routing**: Each major section should be a page route. Layouts provide persistent shells. Use `usePathname()` + `<Link>` for navigation.
 {{/IF_NEXTJS}}
+{{#IF_VUE}}
+- **Vue composition**: Use `<script setup>` with Composition API. Organize logic into composables (`use*.ts`). Use `defineProps`/`defineEmits` for component contracts.
+{{/IF_VUE}}
+{{#IF_ANGULAR}}
+- **Angular structure**: One module per feature. Use services for business logic. Prefer standalone components. Use RxJS operators properly — always unsubscribe or use `async` pipe.
+{{/IF_ANGULAR}}
+{{#IF_SVELTE}}
+- **Svelte structure**: Use `$:` for reactive declarations. Use stores for shared state. Keep components small — extract logic into separate `.ts` files.
+{{/IF_SVELTE}}
+{{#IF_ASTRO}}
+- **Astro architecture**: Use islands for interactive components. Content collections for structured data. Prefer static rendering unless SSR is needed for that page.
+{{/IF_ASTRO}}
 
 {{#IF_RTK_QUERY}}
-## Service Layer
+## Service Layer (RTK Query)
 
 - **`src/services/api/`** — RTK Query services ONLY. Each file extends the base API factory. One service per domain.
 - **Base service** — Network setup only (JWT injection, error handling). Do NOT add business logic.
 - **Service registry** — When adding a new service, register in 3 places: reducers, middleware, and re-export.
 - **Tag constants** — All RTK cache tags in a centralized constant file. Never define tags inline. Use `Object.values()` for tag arrays.
 - **Request/Response types** — All DTOs in dedicated model directories. Never define types inline in service files.
-- **Service wrappers** — Optional convenience hooks wrapping RTK mutations. Only create when the same logic is reused across components.
 {{/IF_RTK_QUERY}}
 
+{{#IF_REDUX}}
+## State Management (Redux)
+
+- **Slices**: One slice per domain in `store/` or `slices/`. Use `createSlice` for reducers and actions.
+- **Selectors**: Define reusable selectors with `createSelector`. Colocate selectors with their slice.
+- **Async**: Use `createAsyncThunk` for async operations. Handle loading/error/success states in `extraReducers`.
+- **Normalize state**: Use flat, normalized state shape. Avoid nesting entities.
+{{/IF_REDUX}}
+
+{{#IF_ZUSTAND}}
+## State Management (Zustand)
+
+- **One store per domain** — avoid a single monolithic store. Split by feature/concern.
+- **Selectors**: Always use selectors to access state — `useStore(state => state.count)`, not `useStore()`.
+- **Middleware**: Use `persist` for local storage, `devtools` for debugging. Configure in store creation.
+- **Actions**: Define actions inside the store. Keep them focused and named descriptively.
+{{/IF_ZUSTAND}}
+
+{{#IF_JOTAI}}
+## State Management (Jotai)
+
+- **Atoms**: One atom per piece of state. Name descriptively (`userAtom`, `themeAtom`).
+- **Derived atoms**: Use `atom((get) => ...)` for computed state. Avoid redundant state.
+- **Atom families**: Use `atomFamily` for parameterized state (e.g., per-item state).
+{{/IF_JOTAI}}
+
+{{#IF_MOBX}}
+## State Management (MobX)
+
+- **Stores**: One observable store class per domain. Use `makeAutoObservable` in constructor.
+- **Actions**: All state mutations must be in actions. Use `runInAction` for async mutations.
+- **Computed**: Use `get` for derived values. MobX auto-tracks dependencies.
+- **Reactions**: Use `reaction` or `autorun` sparingly — prefer computed values.
+{{/IF_MOBX}}
+
+{{#IF_TANSTACK_QUERY}}
+## Data Fetching (TanStack Query)
+
+- **Query keys**: Use query key factories — `queryKeys.users.list()`, `queryKeys.users.detail(id)`. Never use inline string keys.
+- **Custom hooks**: One custom hook per query/mutation — `useUsers()`, `useCreateUser()`. Colocate with the feature.
+- **Cache invalidation**: Use `queryClient.invalidateQueries()` after mutations. Match keys precisely.
+- **Optimistic updates**: Use `onMutate` for instant UI feedback. Rollback in `onError`.
+{{/IF_TANSTACK_QUERY}}
+
+{{#IF_SWR}}
+## Data Fetching (SWR)
+
+- **Key conventions**: Use descriptive keys — `/api/users`, `/api/users/${id}`. Define a shared fetcher.
+- **Revalidation**: Configure `revalidateOnFocus`, `revalidateOnReconnect` per use case. Use `mutate()` for manual revalidation.
+- **Global config**: Set default options in `SWRConfig` provider.
+{{/IF_SWR}}
+
+{{#IF_APOLLO}}
+## Data Fetching (Apollo Client)
+
+- **Queries/Mutations**: Colocate GraphQL operations with the components that use them. Use `useQuery`/`useMutation` hooks.
+- **Cache**: Use normalized cache. Define `typePolicies` for custom cache behavior.
+- **Fragments**: Use fragments for reusable field selections. Colocate with components.
+- **Error handling**: Configure `errorPolicy` per query. Use `onError` link for global error handling.
+{{/IF_APOLLO}}
+
+{{#IF_TRPC}}
+## API Layer (tRPC)
+
+- **Routers**: One router per domain. Compose into `appRouter` via `mergeRouters` or `router()`.
+- **Procedures**: Name descriptively — `users.list`, `users.create`. Use `input` validation with Zod.
+- **Type inference**: Let tRPC infer types — never manually type API responses.
+- **Middleware**: Use for auth, logging, rate limiting. Chain via `.use()`.
+{{/IF_TRPC}}
+
 {{#IF_NESTJS}}
-## Backend Conventions
+## Backend Conventions (NestJS)
 
 - **Module structure**: One module per domain. Each module has controller, service, and DTOs.
 - **DTOs**: All in dedicated DTO files with class-validator decorators. Never accept raw objects.
@@ -98,7 +256,6 @@ php artisan test     # Run tests
 - **URLs**: Use `path()` with named routes. Namespace per app.
 - **Settings**: Use environment variables for secrets. Split settings into base/dev/prod.
 - **Serializers**: All DRF serializers in dedicated `serializers.py`. Never define inline.
-- **Management commands**: Custom commands go in `management/commands/`.
 {{/IF_DJANGO}}
 
 {{#IF_FASTAPI}}
@@ -108,7 +265,7 @@ php artisan test     # Run tests
 - **Pydantic models**: All request/response schemas in `schemas/`. Never define inline.
 - **Dependency injection**: Use `Depends()` for shared logic (auth, db sessions).
 - **Async**: Use `async def` for I/O-bound endpoints. Use sync for CPU-bound.
-- **Error handling**: Raise `HTTPException` with specific status codes. Use custom exception handlers for domain errors.
+- **Error handling**: Raise `HTTPException` with specific status codes.
 {{/IF_FASTAPI}}
 
 {{#IF_FLASK}}
@@ -117,7 +274,6 @@ php artisan test     # Run tests
 - **Blueprints**: One blueprint per feature domain. Register in app factory.
 - **App factory**: Use `create_app()` pattern for configuration.
 - **Routes**: Group related routes in blueprints. Use `url_for()` for URL generation.
-- **Config**: Use class-based config (Development, Production, Testing).
 {{/IF_FLASK}}
 
 {{#IF_PHP}}
@@ -125,7 +281,7 @@ php artisan test     # Run tests
 
 - **PSR-4 autoloading**: Follow namespace-to-directory mapping. One class per file.
 - **PSR-12 coding style**: Follow standard coding style. Use automated formatters.
-- **Type declarations**: Use strict types (`declare(strict_types=1)`) in all files. Type all parameters, returns, and properties.
+- **Type declarations**: Use strict types (`declare(strict_types=1)`) in all files.
 - **Never use raw superglobals**: Use framework Request objects instead of `$_GET`, `$_POST`, `$_REQUEST`.
 {{/IF_PHP}}
 
@@ -133,24 +289,159 @@ php artisan test     # Run tests
 ## Laravel Conventions
 
 - **Eloquent models**: One model per table. Define `$fillable` or `$guarded`. Use relationships and scopes.
-- **Migrations**: Use artisan to generate. Never edit existing migrations in production — create new ones.
+- **Migrations**: Use artisan to generate. Never edit existing migrations in production.
 - **Controllers**: One resource controller per model. Use Form Requests for validation.
 - **Form Requests**: All validation in dedicated Form Request classes. Never validate in controllers.
-- **Resources**: Use API Resources for response transformation. Never return raw models from API endpoints.
-- **Artisan commands**: Custom commands in `app/Console/Commands/`. Register in Kernel.
-- **Service pattern**: Extract business logic into services. Controllers should only handle HTTP concerns.
-- **Blade templates**: Use components and layouts. Avoid inline PHP in views.
+- **Resources**: Use API Resources for response transformation. Never return raw models.
+- **Service pattern**: Extract business logic into services. Controllers handle HTTP only.
 {{/IF_LARAVEL}}
 
 {{#IF_SYMFONY}}
 ## Symfony Conventions
 
 - **Controllers**: Extend `AbstractController`. One controller per feature area.
-- **Services**: Register in `services.yaml` or use autowiring. Inject dependencies via constructor.
+- **Services**: Use autowiring. Inject dependencies via constructor.
 - **Doctrine entities**: One entity per table. Use repositories for queries.
 - **Forms**: Use Form types for validation and data transformation.
-- **Twig templates**: Use template inheritance with `extends` and `block`.
 {{/IF_SYMFONY}}
+
+{{#IF_GO}}
+## Go Conventions
+
+- **Package organization**: One package per directory. Name packages as short nouns. Avoid `util`, `common`, `misc`.
+- **Error handling**: Always check errors — `if err != nil { return err }`. Wrap errors with context using `fmt.Errorf("operation: %w", err)`.
+- **Interfaces**: Define interfaces where they're used, not where they're implemented. Keep interfaces small.
+- **Naming**: Exported names are `PascalCase`. Unexported are `camelCase`. Acronyms are all-caps (`HTTPClient`, not `HttpClient`).
+- **Formatting**: `gofmt` is non-negotiable. Run `goimports` for import organization.
+- **Testing**: Tests in `_test.go` files. Use table-driven tests. Use `testify` for assertions if available.
+{{/IF_GO}}
+
+{{#IF_GIN}}
+## Gin Conventions
+
+- **Router groups**: Group routes by resource — `v1 := r.Group("/api/v1")`.
+- **Middleware**: Use `r.Use()` for global middleware. Group-level middleware for scoped concerns.
+- **Binding**: Use `ShouldBindJSON()` for request binding with validation. Return specific error messages.
+- **Error responses**: Use consistent JSON error format — `c.JSON(code, gin.H{"error": message})`.
+{{/IF_GIN}}
+
+{{#IF_RUST}}
+## Rust Conventions
+
+- **Error handling**: Use `Result<T, E>` and the `?` operator. Avoid `.unwrap()` except in tests. Define custom error types with `thiserror`.
+- **Module structure**: One module per file. Use `mod.rs` or file-as-module. Re-export public API from `lib.rs`.
+- **Ownership**: Prefer borrowing (`&T`) over cloning. Use `Arc<T>` for shared ownership in async code.
+- **Formatting**: `cargo fmt` is mandatory. `cargo clippy` must pass with no warnings.
+- **Traits**: Use traits for abstraction. Implement standard traits (`Display`, `Debug`, `From`) where appropriate.
+- **Async**: Use `tokio` runtime. Use `async fn` with `.await`. Avoid blocking in async code.
+{{/IF_RUST}}
+
+{{#IF_AXUM}}
+## Axum Conventions
+
+- **Router**: Compose routes with `Router::new().route()`. Use `nest()` for sub-routers.
+- **Extractors**: Use extractors for request parsing — `Json<T>`, `Path<T>`, `Query<T>`, `State<T>`.
+- **Middleware**: Use tower middleware. Apply with `.layer()`. Order matters (last added = first executed).
+- **Error handling**: Return `impl IntoResponse`. Define custom error types that implement `IntoResponse`.
+{{/IF_AXUM}}
+
+{{#IF_RUBY}}
+## Ruby Conventions
+
+- **Naming**: `snake_case` for methods and variables. `PascalCase` for classes/modules. `SCREAMING_SNAKE` for constants.
+- **Methods**: Use `?` suffix for boolean methods. Use `!` suffix for dangerous/mutating methods.
+- **Blocks**: Use `{}` for single-line blocks. Use `do...end` for multi-line blocks.
+- **Gems**: Keep Gemfile organized by group (production, development, test).
+{{/IF_RUBY}}
+
+{{#IF_RAILS}}
+## Rails Conventions
+
+- **MVC**: Follow Rails conventions strictly — models in `app/models/`, controllers in `app/controllers/`, views in `app/views/`.
+- **ActiveRecord**: Use scopes for reusable queries. Use validations on models. Use callbacks sparingly.
+- **Routes**: RESTful routes via `resources`. Use `namespace` and `scope` for organization. Named routes everywhere.
+- **Strong parameters**: Always use `params.require(:model).permit(:field1, :field2)`. Never trust user input.
+- **Service objects**: Extract complex business logic into `app/services/`. Keep controllers thin.
+- **Background jobs**: Use Sidekiq/ActiveJob. Keep jobs idempotent and small.
+{{/IF_RAILS}}
+
+{{#IF_JAVA}}
+## Java Conventions
+
+- **Package structure**: Organize by layer (`controller`, `service`, `repository`, `model`, `dto`, `config`).
+- **Naming**: Classes are `PascalCase`. Methods/variables are `camelCase`. Constants are `UPPER_SNAKE_CASE`.
+- **Immutability**: Prefer immutable objects. Use `final` fields. Use builder pattern for complex objects.
+- **Optional**: Use `Optional<T>` for return types that may be absent. Never use `Optional` as a parameter.
+- **Streams**: Use Java streams for collection operations. Keep stream chains readable.
+{{/IF_JAVA}}
+
+{{#IF_SPRING_BOOT}}
+## Spring Boot Conventions
+
+- **Layered architecture**: Controller → Service → Repository. Never skip layers.
+- **Annotations**: `@RestController` for APIs. `@Service` for business logic. `@Repository` for data access.
+- **DTOs**: Map between entities and DTOs. Never expose entities directly in API responses.
+- **Exception handling**: Use `@ControllerAdvice` with `@ExceptionHandler` for global error handling.
+- **Profiles**: Use `application-{profile}.yml` for environment-specific config. Secrets via environment variables.
+- **Dependency injection**: Use constructor injection. Avoid `@Autowired` on fields.
+{{/IF_SPRING_BOOT}}
+
+{{#IF_DOTNET}}
+## .NET Conventions
+
+- **Namespace**: Match namespace to folder structure. One type per file.
+- **Async/Await**: Use `async Task<T>` for async methods. Never use `async void` except for event handlers.
+- **Dependency injection**: Register services in `Program.cs`. Use constructor injection.
+- **LINQ**: Use method syntax for complex queries. Use query syntax for simple joins.
+- **Nullable**: Enable nullable reference types. Handle nulls explicitly with `?.` and `??`.
+{{/IF_DOTNET}}
+
+{{#IF_ASPNET}}
+## ASP.NET Core Conventions
+
+- **Controllers**: Inherit from `ControllerBase` for APIs. Use `[ApiController]` attribute. Return `ActionResult<T>`.
+- **Middleware**: Register in `Program.cs`. Order matters — auth before authorization.
+- **Model validation**: Use data annotations or FluentValidation. Return `400` for validation errors.
+- **Configuration**: Use `IOptions<T>` pattern. Never read config directly in services.
+{{/IF_ASPNET}}
+
+{{#IF_DART}}
+## Dart Conventions
+
+- **Naming**: Classes are `PascalCase`. Variables/functions are `camelCase`. Files are `snake_case.dart`.
+- **Null safety**: Use `?` for nullable types. Use `!` only when certain. Prefer `??` for defaults.
+- **Async**: Use `async`/`await`. Return `Future<T>`. Use `Stream<T>` for reactive data.
+- **Effective Dart**: Follow official Effective Dart guidelines for style, documentation, and API design.
+{{/IF_DART}}
+
+{{#IF_FLUTTER}}
+## Flutter Conventions
+
+- **Widget structure**: Keep `build()` methods small. Extract sub-widgets as separate classes.
+- **State management**: Use chosen state solution (Riverpod/Bloc/Provider) consistently. Never mix approaches.
+- **Const constructors**: Use `const` wherever possible for widget constructors — improves rebuild performance.
+- **Navigation**: Use declarative routing (go_router). Define routes in a central file.
+- **Theming**: Use `ThemeData` for consistent styling. Access via `Theme.of(context)`.
+{{/IF_FLUTTER}}
+
+{{#IF_SWIFT}}
+## Swift Conventions
+
+- **Naming**: Types are `PascalCase`. Properties/methods are `camelCase`. Protocols describe capabilities (`Codable`, `Equatable`).
+- **Optionals**: Prefer `guard let` and `if let` over force unwrapping. Use `??` for defaults.
+- **Protocols**: Prefer protocol-oriented design. Define protocols for testability.
+- **Value vs Reference**: Use structs for data. Use classes when identity matters or for reference semantics.
+- **Access control**: Default to `private`. Expose only what's needed as `internal` or `public`.
+{{/IF_SWIFT}}
+
+{{#IF_SWIFTUI}}
+## SwiftUI Conventions
+
+- **View composition**: Break complex views into smaller sub-views. Use `ViewBuilder` for composable parts.
+- **State**: `@State` for local state. `@Binding` for parent-owned state. `@ObservedObject`/`@StateObject` for external state.
+- **Environment**: Use `@Environment` for system values. Use `@EnvironmentObject` for app-wide state.
+- **Previews**: Provide previews with sample data for every view.
+{{/IF_SWIFTUI}}
 
 ## Bug Fixing
 
@@ -170,8 +461,9 @@ When building from designs (Figma or .pen files):
 
 ## Agents
 
-Run **code-guardian** FIRST before starting any task.
+Run **code-learner** FIRST to discover project-specific patterns. Then run **code-guardian** to audit.
 
+- `.claude/agents/code-learner.md` — Scans codebase, discovers patterns, writes them into CLAUDE.md
 - `.claude/agents/code-guardian.md` — Audits rule compliance, finds violations, discovers undocumented patterns
 {{#IF_FRONTEND}}
 - `.claude/agents/figma-builder.md` — Builds pixel-perfect components from Figma designs

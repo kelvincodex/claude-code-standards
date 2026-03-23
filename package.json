@@ -1,7 +1,7 @@
 {
   "name": "claude-code-standards",
-  "version": "1.2.0",
-  "description": "Reusable Claude Code agents, rules, and conventions for any project. Auto-detects your tech stack and generates CLAUDE.md + agents.",
+  "version": "2.0.0",
+  "description": "Smart auto-learning code standards for any project. Detects 10+ languages, 50+ frameworks, scans your code patterns, and generates CLAUDE.md, AGENTS.md, and .cursorrules.",
   "bin": {
     "claude-code-standards": "bin/init.js"
   },
@@ -16,7 +16,13 @@
     "code-quality",
     "agents",
     "standards",
-    "conventions"
+    "conventions",
+    "AGENTS.md",
+    "cursorrules",
+    "ai-coding",
+    "code-scanner",
+    "auto-detect",
+    "multi-language"
   ],
   "repository": {
     "type": "git",
