@@ -1,0 +1,27 @@
+{
+  "name": "claude-code-standards",
+  "version": "1.1.0",
+  "description": "Reusable Claude Code agents, rules, and conventions for any project. Auto-detects your tech stack and generates CLAUDE.md + agents.",
+  "bin": {
+    "claude-code-standards": "bin/init.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "templates/"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "code-quality",
+    "agents",
+    "standards",
+    "conventions"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kelvincodex/claude-code-standards.git"
+  },
+  "author": "kelvincodex",
+  "license": "MIT"
+}

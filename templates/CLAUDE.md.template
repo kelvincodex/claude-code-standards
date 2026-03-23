@@ -1,0 +1,96 @@
+# CLAUDE.md
+
+## Project Overview
+
+{{PROJECT_NAME}} — {{PROJECT_DESCRIPTION}}
+
+## Commands
+
+```bash
+npm run dev         # Dev server
+npm run build       # Production build (ALWAYS run after changes to verify)
+npm run lint        # Linting
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+{{TECH_STACK_TABLE}}
+
+## Key Conventions
+
+- **Import alias**: Use `@/*` or configured path alias for imports. Avoid deep relative paths.
+- **Component organization** — organize by what the component IS:
+  - `ui/` — UI library primitives (READ-ONLY if using shadcn/ui)
+  - `sidebar/` — shell navigation (sidebar, header)
+  - `cards/` — reusable card components
+  - `banners/` — hero/banner sections
+  - `widgets/` — floating/interactive widgets
+  - `sections/` — page sections that compose cards/banners
+  - `pages/` — full page-level content views
+  - `modal/` — modal dialogs
+  - Think about what the component IS, not what page it appears on.
+{{#IF_SHADCN}}
+- **`src/components/ui/` is READ-ONLY** — never modify UI library primitives directly. Create wrappers in feature directories that import and extend them.
+{{/IF_SHADCN}}
+{{#IF_ZOD}}
+- **Form validation**: All Zod schemas go in a dedicated validation directory. Never define validation inline in components.
+{{/IF_ZOD}}
+{{#IF_NICE_MODAL}}
+- **Modals**: Use `@ebay/nice-modal-react` with centralized `ModalConstant` for IDs. Each modal uses `NiceModal.create()` + UI Dialog. Register in barrel file.
+{{/IF_NICE_MODAL}}
+{{#IF_NEXTJS}}
+- **Routing**: Each major section should be a page route. Layouts provide persistent shells. Use `usePathname()` + `<Link>` for navigation.
+{{/IF_NEXTJS}}
+
+{{#IF_RTK_QUERY}}
+## Service Layer
+
+- **`src/services/api/`** — RTK Query services ONLY. Each file extends the base API factory. One service per domain.
+- **Base service** — Network setup only (JWT injection, error handling). Do NOT add business logic.
+- **Service registry** — When adding a new service, register in 3 places: reducers, middleware, and re-export.
+- **Tag constants** — All RTK cache tags in a centralized constant file. Never define tags inline. Use `Object.values()` for tag arrays.
+- **Request/Response types** — All DTOs in dedicated model directories. Never define types inline in service files.
+- **Service wrappers** — Optional convenience hooks wrapping RTK mutations. Only create when the same logic is reused across components.
+{{/IF_RTK_QUERY}}
+
+{{#IF_NESTJS}}
+## Backend Conventions
+
+- **Module structure**: One module per domain. Each module has controller, service, and DTOs.
+- **DTOs**: All in dedicated DTO files with class-validator decorators. Never accept raw objects.
+- **Guards**: Use guards for auth. Mark public endpoints explicitly.
+- **Pipes**: Use ValidationPipe globally. DTOs handle validation.
+- **Interceptors**: Use for response transformation and logging.
+{{/IF_NESTJS}}
+
+## Bug Fixing
+
+Identify the EXACT file and component before patching. After fixing, grep the codebase for similar patterns that may need the same fix.
+
+{{#IF_FRONTEND}}
+## Figma-to-Code Rules
+
+When building from Figma designs:
+- **Never neglect backgrounds** — apply every gradient, color, shadow
+- **Always read UI library source** — check for default styles that override yours
+- **Exact spacing** — match gap, padding, margin from the design exactly
+- **Check every surface** — background, box-shadow, border, border-radius must all match
+- **Use figma-builder and figma-validator agents** for pixel-perfect implementation
+- **Visual compare** — always compare rendered output against the design
+{{/IF_FRONTEND}}
+
+## Agents
+
+Run **code-guardian** FIRST before starting any task.
+
+- `.claude/agents/code-guardian.md` — Audits rule compliance, finds violations, discovers undocumented patterns
+{{#IF_FRONTEND}}
+- `.claude/agents/figma-builder.md` — Builds pixel-perfect components from Figma
+- `.claude/agents/figma-validator.md` — Validates components against Figma designs
+{{/IF_FRONTEND}}
+
+## Additional Documentation
+
+- `.claude/docs/architectural_patterns.md` — Recurring patterns and conventions
