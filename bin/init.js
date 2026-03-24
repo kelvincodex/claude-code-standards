@@ -4,9 +4,7 @@ const path = require('path');
 const { detectStack } = require('../lib/detect');
 const { scanAll } = require('../lib/scan');
 const {
-  generateClaudeMd,
-  generateAgentsMd,
-  generateCursorRules,
+  generateAllFormats,
   installAgents,
   installDocs,
 } = require('../lib/install');
@@ -35,16 +33,24 @@ Usage:
   npx claude-code-standards init [options]
 
 Options:
-  --format <type>   Output format: claude (default), agents, cursor, all
+  --format <type>   Output format(s) to generate:
+                      claude       CLAUDE.md only (default)
+                      popular      Top 6: CLAUDE.md, AGENTS.md, Copilot, Cursor, Windsurf, Gemini
+                      all          All 17 formats (every AI tool)
+                      <name>       Specific: claude, agents, gemini, copilot, cursor, cursorrules,
+                                   windsurf, aider, cline, zed, junie, amazonq, roo, augment,
+                                   tabnine, jetbrains, continue
   --no-scan         Skip code scanning (faster, template-only output)
-  --update          Re-scan and update existing CLAUDE.md (preserves manual edits)
+  --update          Re-scan and update existing files (preserves manual edits)
   -h, --help        Show this help message
 
-Supported projects:
-  Node.js (package.json), Python (requirements.txt/pyproject.toml),
-  PHP (composer.json), Go (go.mod), Rust (Cargo.toml), Ruby (Gemfile),
-  Java/Kotlin (pom.xml/build.gradle), C#/.NET (*.csproj),
-  Dart/Flutter (pubspec.yaml), Swift (Package.swift)
+Supported languages:
+  Node.js, Python, PHP, Go, Rust, Ruby, Java/Kotlin, C#/.NET, Dart/Flutter, Swift
+
+Supported AI tools (17 formats):
+  Claude Code, AGENTS.md (universal), Cursor, GitHub Copilot, Windsurf,
+  Gemini CLI, Antigravity, Aider, Cline, Zed, Continue.dev, Amazon Q,
+  Roo Code, Augment, Tabnine, JetBrains AI, JetBrains Junie
 `);
     process.exit(0);
   }
@@ -190,24 +196,8 @@ if (!flags.noScan) {
 }
 
 // Step 3: Generate output files
-const shouldGenerate = (fmt) =>
-  flags.format === 'all' || flags.format === fmt;
-
-if (shouldGenerate('claude')) {
-  console.log('Generating CLAUDE.md...');
-  generateClaudeMd(projectDir, stack, scanResults);
-  console.log('  Created CLAUDE.md');
-}
-
-if (shouldGenerate('agents')) {
-  console.log('Generating AGENTS.md...');
-  generateAgentsMd(projectDir, stack, scanResults);
-}
-
-if (shouldGenerate('cursor')) {
-  console.log('Generating .cursorrules...');
-  generateCursorRules(projectDir, stack, scanResults);
-}
+console.log('Generating config files...');
+const generated = generateAllFormats(projectDir, stack, scanResults, flags.format);
 
 // Step 4: Install agents
 console.log('\nInstalling agents...');
@@ -217,13 +207,13 @@ installAgents(projectDir, stack);
 console.log('\nInstalling docs...');
 installDocs(projectDir, stack);
 
-console.log('\n✅ Done! Claude Code Standards initialized.');
+console.log(`\n✅ Done! Generated ${generated.length} config file(s).`);
 console.log('\nNext steps:');
 console.log('  1. Run the code-learner agent to discover project-specific patterns');
-console.log('  2. Review CLAUDE.md and customize project-specific sections');
+console.log('  2. Review generated config files and customize project-specific sections');
 console.log('  3. Run the code-guardian agent to audit your codebase');
-console.log('  4. Commit .claude/ directory and CLAUDE.md to your repo');
-if (flags.format === 'all') {
-  console.log('  5. Commit AGENTS.md and .cursorrules for other AI tools');
+console.log('  4. Commit generated files and .claude/ directory to your repo');
+if (generated.length === 1) {
+  console.log('\n  Tip: Use --format popular for top 6 AI tools, or --format all for all 17');
 }
 console.log('');

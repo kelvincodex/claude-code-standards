@@ -24,11 +24,12 @@ This will:
 ## Options
 
 ```bash
-npx claude-code-standards init --format all      # Generate CLAUDE.md + AGENTS.md + .cursorrules
-npx claude-code-standards init --format agents    # Generate AGENTS.md only
-npx claude-code-standards init --format cursor    # Generate .cursorrules only
-npx claude-code-standards init --no-scan          # Skip code scanning (template-only)
-npx claude-code-standards init --update           # Re-scan and update (preserves manual edits)
+npx claude-code-standards init                      # CLAUDE.md only (default)
+npx claude-code-standards init --format popular     # Top 6: CLAUDE.md, AGENTS.md, Copilot, Cursor, Windsurf, Gemini
+npx claude-code-standards init --format all         # All 17 AI tool formats
+npx claude-code-standards init --format copilot     # Specific format only
+npx claude-code-standards init --no-scan            # Skip code scanning (template-only)
+npx claude-code-standards init --update             # Re-scan and update (preserves manual edits)
 ```
 
 ## Supported Languages
@@ -94,14 +95,31 @@ Builds components from .pen (Pencil) design files using Pencil MCP tools.
 ### pen-validator (frontend)
 Validates components against .pen designs.
 
-## Multi-Format Output
+## Multi-Format Output (17 AI Tools)
 
-| Format | File | Compatible With |
-|--------|------|----------------|
-| `claude` (default) | `CLAUDE.md` | Claude Code |
-| `agents` | `AGENTS.md` | Cursor, GitHub Copilot, OpenAI Codex, Continue.dev, Aider |
-| `cursor` | `.cursorrules` | Cursor AI |
-| `all` | All three | Everything |
+| Format Key | File Path | AI Tool |
+|-----------|-----------|---------|
+| `claude` | `CLAUDE.md` | Claude Code, Warp, Zed, Amp |
+| `agents` | `AGENTS.md` | OpenAI Codex, Cursor, Copilot, Gemini, Antigravity, 20+ tools |
+| `cursor` | `.cursor/rules/standards.mdc` | Cursor (current, with frontmatter) |
+| `cursorrules` | `.cursorrules` | Cursor (legacy) |
+| `copilot` | `.github/copilot-instructions.md` | GitHub Copilot |
+| `windsurf` | `.windsurf/rules/standards.md` | Windsurf / Codeium |
+| `gemini` | `GEMINI.md` | Gemini CLI, Antigravity |
+| `aider` | `CONVENTIONS.md` | Aider |
+| `cline` | `.clinerules` | Cline |
+| `zed` | `.rules` | Zed Editor |
+| `continue` | `.continue/rules/standards.md` | Continue.dev |
+| `amazonq` | `.amazonq/rules/standards.md` | Amazon Q Developer |
+| `roo` | `.roo/rules/standards.md` | Roo Code |
+| `augment` | `.augment/rules/standards.md` | Augment Code |
+| `tabnine` | `.tabnine/guidelines/standards.md` | Tabnine |
+| `jetbrains` | `.aiassistant/rules/standards.md` | JetBrains AI Assistant |
+| `junie` | `.junie/guidelines.md` | JetBrains Junie |
+
+**Shortcuts:**
+- `--format popular` — generates top 6 (Claude, AGENTS.md, Copilot, Cursor, Windsurf, Gemini)
+- `--format all` — generates all 17 formats
 
 ## License
 
