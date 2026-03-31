@@ -1,6 +1,6 @@
 {
   "name": "claude-code-standards",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Smart auto-learning code standards for any project. Detects 10+ languages, 50+ frameworks, scans your code patterns, and generates CLAUDE.md, AGENTS.md, and .cursorrules.",
   "bin": {
     "claude-code-standards": "bin/init.js"
@@ -10,6 +10,16 @@
     "lib/",
     "templates/"
   ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "prepublishOnly": "npm test",
+    "version": "git add -A",
+    "postversion": "git push && git push --tags",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish",
+    "publish:dry": "npm publish --dry-run"
+  },
   "keywords": [
     "claude",
     "claude-code",

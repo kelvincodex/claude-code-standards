@@ -1,0 +1,4 @@
+django==4.2
+djangorestframework==3.14
+celery==5.3
+pytest==7.4

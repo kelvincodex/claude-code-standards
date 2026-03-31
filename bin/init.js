@@ -15,6 +15,7 @@ const flags = {
   format: 'claude', // claude | agents | cursor | all
   noScan: false,
   update: false,
+  dryRun: false,
 };
 
 for (let i = 0; i < args.length; i++) {
@@ -23,6 +24,8 @@ for (let i = 0; i < args.length; i++) {
     i++;
   } else if (args[i] === '--no-scan') {
     flags.noScan = true;
+  } else if (args[i] === '--dry-run') {
+    flags.dryRun = true;
   } else if (args[i] === '--update') {
     flags.update = true;
   } else if (args[i] === '--help' || args[i] === '-h') {
@@ -42,6 +45,7 @@ Options:
                                    tabnine, jetbrains, continue
   --no-scan         Skip code scanning (faster, template-only output)
   --update          Re-scan and update existing files (preserves manual edits)
+  --dry-run         Preview what would be generated without writing files
   -h, --help        Show this help message
 
 Supported languages:
@@ -54,6 +58,12 @@ Supported AI tools (17 formats):
 `);
     process.exit(0);
   }
+}
+
+// --update overrides --no-scan (update always needs fresh scan data)
+if (flags.update && flags.noScan) {
+  console.log('Note: --update overrides --no-scan; scanning will proceed.');
+  flags.noScan = false;
 }
 
 const projectDir = process.cwd();
@@ -197,15 +207,20 @@ if (!flags.noScan) {
 
 // Step 3: Generate output files
 console.log('Generating config files...');
-const generated = generateAllFormats(projectDir, stack, scanResults, flags.format);
+const generated = generateAllFormats(projectDir, stack, scanResults, flags.format, flags.update, flags.dryRun);
 
-// Step 4: Install agents
-console.log('\nInstalling agents...');
-installAgents(projectDir, stack);
+// Step 4 & 5: Install agents and docs (skip in update mode)
+if (!flags.update) {
+  if (flags.dryRun) {
+    console.log('\n[dry-run] Would install agents and docs to .claude/');
+  } else {
+    console.log('\nInstalling agents...');
+    installAgents(projectDir, stack);
 
-// Step 5: Install docs
-console.log('\nInstalling docs...');
-installDocs(projectDir, stack);
+    console.log('\nInstalling docs...');
+    installDocs(projectDir, stack);
+  }
+}
 
 console.log(`\n✅ Done! Generated ${generated.length} config file(s).`);
 console.log('\nNext steps:');
