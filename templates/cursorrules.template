@@ -27,6 +27,10 @@
 
 {{LEARNED_PATTERNS}}
 
+## Code Hygiene
+
+{{CODE_HYGIENE}}
+
 {{#IF_RTK_QUERY}}
 ## Service Layer
 

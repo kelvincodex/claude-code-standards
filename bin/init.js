@@ -8,7 +8,8 @@ const {
   installAgents,
   installDocs,
 } = require('../lib/install');
-const { promptToolSelection, TOOL_CATALOG } = require('../lib/prompt');
+const { promptToolSelection, TOOL_CATALOG, c } = require('../lib/prompt');
+const { auditProject, printAuditReport } = require('../lib/audit');
 
 // Parse CLI flags
 const args = process.argv.slice(2);
@@ -17,6 +18,8 @@ const flags = {
   noScan: false,
   update: false,
   dryRun: false,
+  interactive: false,
+  audit: false,
 };
 
 for (let i = 0; i < args.length; i++) {
@@ -29,6 +32,10 @@ for (let i = 0; i < args.length; i++) {
     flags.dryRun = true;
   } else if (args[i] === '--update') {
     flags.update = true;
+  } else if (args[i] === '--audit') {
+    flags.audit = true;
+  } else if (args[i] === '--interactive' || args[i] === '-i') {
+    flags.interactive = true;
   } else if (args[i] === '--help' || args[i] === '-h') {
     console.log(`
 Claude Code Standards — Auto-detect your stack, scan patterns, generate standards.
@@ -41,13 +48,17 @@ Options:
                       claude       CLAUDE.md only
                       popular      Top 6: CLAUDE.md, AGENTS.md, Copilot, Cursor, Windsurf, Gemini
                       all          All 17 formats (every AI tool)
-                      <name>       Specific: claude, agents, gemini, copilot, cursor, cursorrules,
-                                   windsurf, aider, cline, zed, junie, amazonq, roo, augment,
-                                   tabnine, jetbrains, continue
+                      <name>       Specific tool (comma-separated for multiple):
+                                   claude,cursor,copilot
+                      Available: claude, agents, gemini, copilot, cursor, cursorrules,
+                                 windsurf, aider, cline, zed, junie, amazonq, roo, augment,
+                                 tabnine, jetbrains, continue
                     If omitted, an interactive selector is shown.
+  --interactive, -i Force interactive tool selector (even if --format is set)
   --no-scan         Skip code scanning (faster, template-only output)
   --update          Re-scan and update existing files (preserves manual edits)
   --dry-run         Preview what would be generated without writing files
+  --audit           Audit existing CLAUDE.md/AGENTS.md against actual codebase
   -h, --help        Show this help message
 
 Supported languages:
@@ -68,21 +79,35 @@ if (flags.update && flags.noScan) {
   flags.noScan = false;
 }
 
+// Support comma-separated --format values (e.g. --format claude,cursor,copilot)
+if (flags.format && flags.format.includes(',')) {
+  flags.format = flags.format.split(',').map(f => f.trim()).filter(Boolean);
+}
+
 // Main flow (async for interactive prompt)
 (async () => {
   const projectDir = process.cwd();
 
-  console.log('\n🔍 Claude Code Standards — Initializing...\n');
-  console.log(`Project: ${projectDir}\n`);
+  // Audit mode: run audit and exit
+  if (flags.audit) {
+    console.log(`\n${c.bold('🔍 Claude Code Standards')} — Auditing...\n`);
+    console.log(`${c.dim('Project:')} ${projectDir}\n`);
+    const results = auditProject(projectDir);
+    const failCount = printAuditReport(results);
+    process.exit(failCount > 0 ? 1 : 0);
+  }
 
-  // Step 0: Interactive tool selection (if no --format flag)
+  console.log(`\n${c.bold('🔍 Claude Code Standards')} — Initializing...\n`);
+  console.log(`${c.dim('Project:')} ${projectDir}\n`);
+
+  // Step 0: Interactive tool selection
   let formatSelection = flags.format;
-  if (formatSelection === null) {
-    formatSelection = await promptToolSelection();
+  if (formatSelection === null || flags.interactive) {
+    formatSelection = await promptToolSelection(projectDir);
   }
 
   // Step 1: Detect stack
-  console.log('Detecting tech stack...');
+  console.log(`${c.bold('Detecting tech stack...')}`);
   const stack = detectStack(projectDir);
 
   // Log detected languages
@@ -97,7 +122,7 @@ if (flags.update && flags.noScan) {
   if (stack.isDotnet) languages.push('C# / .NET');
   if (stack.isDart) languages.push('Dart');
   if (stack.isSwift) languages.push('Swift');
-  console.log(`  Language: ${languages.join(', ')}`);
+  console.log(`  ${c.green('Language:')} ${languages.join(', ')}`);
 
   // Log detected frameworks and libraries
   const detected = [];
@@ -182,61 +207,67 @@ if (flags.update && flags.noScan) {
   if (stack.swiftui) detected.push('SwiftUI');
   if (stack.vapor) detected.push('Vapor');
 
-  console.log(`  Detected: ${detected.join(', ') || 'No specific stack detected'}`);
+  console.log(`  ${c.green('Detected:')} ${detected.join(', ') || c.dim('No specific stack detected')}`);
 
   const types = [];
   if (stack.isFrontend) types.push('Frontend');
   if (stack.isBackend) types.push('Backend');
   if (stack.isMobile) types.push('Mobile');
-  console.log(`  Type: ${types.join(' + ') || 'Library/Tool'}`);
+  console.log(`  ${c.green('Type:')} ${types.join(' + ') || 'Library/Tool'}`);
   console.log('');
 
   // Step 2: Scan codebase for patterns
   let scanResults = null;
   if (!flags.noScan) {
-    console.log('Scanning codebase for patterns...');
+    console.log(`${c.bold('Scanning codebase for patterns...')}`);
     try {
       scanResults = scanAll(projectDir, stack);
-      console.log('  Scan complete');
+      console.log(`  ${c.green('Scan complete')}`);
 
       // Log some discoveries
       if (scanResults.existingConfigs.length > 0) {
-        console.log(`  Found configs: ${scanResults.existingConfigs.map(c => c.name).join(', ')}`);
+        console.log(`  ${c.cyan('Found configs:')} ${scanResults.existingConfigs.map(cfg => cfg.name).join(', ')}`);
       }
       if (scanResults.ci.length > 0) {
-        console.log(`  CI/CD: ${scanResults.ci.join(', ')}`);
+        console.log(`  ${c.cyan('CI/CD:')} ${scanResults.ci.join(', ')}`);
       }
       if (scanResults.monorepo.isMonorepo) {
-        console.log(`  Monorepo: ${scanResults.monorepo.tool}`);
+        console.log(`  ${c.cyan('Monorepo:')} ${scanResults.monorepo.tool}`);
+      }
+      // Show config-aware details
+      if (scanResults.configDetails && Object.keys(scanResults.configDetails).length > 0) {
+        for (const [tool, details] of Object.entries(scanResults.configDetails)) {
+          console.log(`  ${c.dim(tool + ':')} ${details.join(', ')}`);
+        }
       }
     } catch (err) {
-      console.log('  Scan skipped (error: ' + err.message + ')');
+      console.log(`  ${c.yellow('Scan skipped')} (error: ${err.message})`);
     }
     console.log('');
   }
 
   // Step 3: Generate output files
-  console.log('Generating config files...');
+  console.log(`${c.bold('Generating config files...')}`);
   const generated = generateAllFormats(projectDir, stack, scanResults, formatSelection, flags.update, flags.dryRun);
 
   // Step 4 & 5: Install agents and docs (skip in update mode)
   if (!flags.update) {
     if (flags.dryRun) {
-      console.log('\n[dry-run] Would install agents and docs to .claude/');
+      console.log(`\n${c.dim('[dry-run] Would install agents and docs to .claude/')}`);
     } else {
-      console.log('\nInstalling agents...');
+      console.log(`\n${c.bold('Installing agents...')}`);
       installAgents(projectDir, stack);
 
-      console.log('\nInstalling docs...');
+      console.log(`\n${c.bold('Installing docs...')}`);
       installDocs(projectDir, stack);
     }
   }
 
-  console.log(`\n✅ Done! Generated ${generated.length} config file(s).`);
-  console.log('\nNext steps:');
-  console.log('  1. Run the code-learner agent to discover project-specific patterns');
-  console.log('  2. Review generated config files and customize project-specific sections');
-  console.log('  3. Run the code-guardian agent to audit your codebase');
+  console.log(`\n${c.green('✅ Done!')} Generated ${c.bold(String(generated.length))} config file(s).`);
+  console.log(`\n${c.bold('Next steps:')}`);
+  console.log(`  1. Run the ${c.cyan('code-learner')} agent to discover project-specific patterns`);
+  console.log(`  2. Review generated config files and customize project-specific sections`);
+  console.log(`  3. Run the ${c.cyan('code-guardian')} agent to audit your codebase`);
   console.log('  4. Commit generated files and .claude/ directory to your repo');
 
   // Show remaining tools that weren't generated
@@ -244,11 +275,12 @@ if (flags.update && flags.noScan) {
   const remaining = TOOL_CATALOG.filter(t => !generatedSet.has(t.key));
 
   if (remaining.length > 0 && remaining.length < TOOL_CATALOG.length) {
-    console.log('\nAdd more tools:');
+    console.log(`\n${c.bold('Add more tools:')}`);
     for (const tool of remaining) {
       const pad = ' '.repeat(Math.max(0, 14 - tool.key.length));
-      console.log(`  npx claude-code-standards init --format ${tool.key}${pad}# ${tool.name} → ${tool.path}`);
+      console.log(`  ${c.dim('npx claude-code-standards init --format')} ${c.cyan(tool.key)}${pad}${c.dim('#')} ${tool.name} ${c.dim('→')} ${tool.path}`);
     }
+    console.log(`\n  ${c.dim('Or re-run the selector:')} npx claude-code-standards init -i`);
   }
 
   console.log('');

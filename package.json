@@ -1,6 +1,6 @@
 {
   "name": "claude-code-standards",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Smart auto-learning code standards for any project. Detects 10+ languages, 50+ frameworks, scans your code patterns, and generates CLAUDE.md, AGENTS.md, and .cursorrules.",
   "bin": {
     "claude-code-standards": "bin/init.js"

@@ -91,6 +91,10 @@ swift run          # Run
 
 {{LEARNED_PATTERNS}}
 
+## Code Hygiene
+
+{{CODE_HYGIENE}}
+
 ## Key Conventions
 
 {{#IF_FRONTEND}}
